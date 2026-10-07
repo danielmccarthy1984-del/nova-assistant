@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova — AI Assistant</title>
+<style>
+:root {
+  --cyan:#39bfff;
+  --blue:#1478ff;
+  --gold:#ffd166;
+  --red:#ff4d4d;
+  --glass:rgba(5,16,29,.62);
+  --line:rgba(76,190,255,.42);
+}
+* { box-sizing:border-box; }
+html,body {
+  margin:0; width:100%; height:100%; overflow:hidden;
+  background:#02060d; color:#fff;
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+}
+body {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(20,120,255,.16), transparent 28%),
+    radial-gradient(circle at 50% 50%, rgba(57,191,255,.08), transparent 48%),
+    linear-gradient(135deg,#01040a,#061321 52%,#02050b);
+}
+.home {
+  position:relative; width:100vw; height:100vh; overflow:hidden;
+}
+.home::before {
+  content:""; position:absolute; inset:0; opacity:.25; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(57,191,255,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(57,191,255,.045) 1px, transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(circle at center, black 0 48%, transparent 78%);
+}
+.topbar {
+  position:absolute; inset:24px 30px auto;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  z-index:10;
+}
+.brand .name {
+  font-size:26px; letter-spacing:7px; font-weight:700;
+  text-shadow:0 0 18px rgba(57,191,255,.55);
+}
+.brand .sub {
+  margin-top:5px; color:rgba(255,255,255,.55);
+  font-size:10px; letter-spacing:3px;
+}
+.clock { text-align:right; }
+.clock .time { font-size:25px; letter-spacing:2px; }
+.clock .date { margin-top:4px; color:rgba(255,255,255,.55); font-size:10px; letter-spacing:2px; }
+
+.panel {
+  position:absolute; width:230px; min-height:112px; padding:16px 17px;
+  border:1px solid var(--line); border-radius:18px;
+  background:linear-gradient(145deg,rgba(9,27,45,.72),rgba(3,10,19,.42));
+  box-shadow:inset 0 0 28px rgba(57,191,255,.045), 0 0 25px rgba(0,0,0,.25);
+  backdrop-filter:blur(12px);
+  z-index:6;
+}
+.panel::after {
+  content:""; position:absolute; width:7px; height:7px; border-radius:50%;
+  background:var(--cyan); box-shadow:0 0 12px var(--cyan);
+}
+.panel h3 {
+  margin:0 0 12px; font-size:11px; letter-spacing:2px;
+  color:#dff7ff; font-weight:600;
+}
+.panel p { margin:6px 0; color:rgba(255,255,255,.72); font-size:13px; }
+.panel .accent { color:var(--cyan); }
+.panel .gold { color:var(--gold); }
+
+.schedule { left:4.5%; top:22%; }
+.schedule::after { right:-4px; top:50%; }
+.reminders { left:50%; top:10%; transform:translateX(-50%); }
+.reminders::after { left:50%; bottom:-4px; }
+.weather { right:4.5%; top:22%; }
+.weather::after { left:-4px; top:50%; }
+.mail { left:4.5%; top:43%; }
+.mail::after { right:-4px; top:50%; }
+.notes { right:4.5%; top:43%; }
+.notes::after { left:-4px; top:50%; }
+.smart { left:4.5%; bottom:13%; }
+.smart::after { right:-4px; top:50%; }
+.news { right:4.5%; bottom:13%; }
+.news::after { left:-4px; top:50%; }
+
+.connector {
+  position:absolute; height:1px; background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  opacity:.32; z-index:2;
+}
+.conn-left { left:24%; right:39%; top:49%; }
+.conn-right { left:61%; right:24%; top:49%; }
+
+.core {
+  position:absolute; left:50%; top:51%; transform:translate(-50%,-50%);
+  width:min(34vw,390px); aspect-ratio:1; z-index:4;
+  display:grid; place-items:center;
+}
+.core::before, .core::after {
+  content:""; position:absolute; border-radius:50%; inset:4%;
+  border:1px solid rgba(57,191,255,.34);
+  box-shadow:0 0 40px rgba(20,120,255,.14), inset 0 0 35px rgba(57,191,255,.08);
+}
+.core::after {
+  inset:14%; border-color:rgba(255,209,102,.18);
+  animation:spin 18s linear infinite reverse;
+}
+.orbit {
+  position:absolute; inset:0; border-radius:50%;
+  border:1px dashed rgba(57,191,255,.23);
+  animation:spin 24s linear infinite;
+}
+.orbit::before, .orbit::after {
+  content:""; position:absolute; width:8px; height:8px; border-radius:50%;
+  background:var(--cyan); box-shadow:0 0 18px var(--cyan);
+}
+.orbit::before { top:4%; left:49%; }
+.orbit::after { bottom:12%; right:8%; }
+.core-glow {
+  width:48%; aspect-ratio:1; border-radius:50%;
+  background:radial-gradient(circle at 42% 38%,#eaffff 0 3%,#7fe4ff 7%,#39bfff 16%,#1478ff 32%,rgba(20,120,255,.24) 52%,transparent 70%);
+  box-shadow:0 0 45px rgba(57,191,255,.75),0 0 120px rgba(20,120,255,.32);
+  animation:breathe 3.2s ease-in-out infinite;
+}
+.core-glow.thinking {
+  animation:breathe 0.9s ease-in-out infinite;
+  filter:hue-rotate(20deg);
+}
+.core-ring {
+  position:absolute; width:68%; aspect-ratio:1; border-radius:50%;
+  border:2px solid rgba(57,191,255,.35);
+  transform:rotate(-18deg) skewX(-12deg);
+  box-shadow:0 0 25px rgba(57,191,255,.18);
+}
+.core-ring.gold { width:57%; border-color:rgba(255,209,102,.35); transform:rotate(35deg) skewX(-12deg); }
+.core-label {
+  position:absolute; bottom:8%; text-align:center;
+  font-size:10px; letter-spacing:3px; color:rgba(255,255,255,.58);
+}
+.core-label strong { display:block; color:#fff; margin-bottom:5px; letter-spacing:4px; }
+
+.voicebar {
+  position:absolute; left:50%; bottom:3.2%; transform:translateX(-50%);
+  width:min(650px,78vw); min-height:62px; z-index:12;
+  display:flex; align-items:center; gap:15px; padding:10px 18px;
+  border:1px solid rgba(57,191,255,.45); border-radius:20px;
+  background:rgba(2,8,15,.78); backdrop-filter:blur(15px);
+  box-shadow:0 0 35px rgba(20,120,255,.16);
+}
+.mic-hotspot {
+  width:42px; height:42px; flex:0 0 42px; border-radius:50%;
+  border:1px solid rgba(57,191,255,.65); background:rgba(57,191,255,.08);
+  cursor:pointer; position:relative; display:grid; place-items:center;
+}
+.mic-hotspot::before { content:""; width:13px; height:19px; border:2px solid #fff; border-radius:9px; }
+.mic-hotspot::after { content:""; position:absolute; width:23px; height:16px; border:2px solid rgba(255,255,255,.85); border-top:0; border-radius:0 0 15px 15px; top:14px; }
+.mic-hotspot.listening {
+  border-color:rgba(255,77,77,.95); box-shadow:0 0 28px rgba(255,77,77,.55);
+  animation:pulse 1s ease-in-out infinite;
+}
+.mic-hotspot.thinking {
+  border-color:rgba(255,209,102,.95); box-shadow:0 0 28px rgba(255,209,102,.55);
+}
+.command { flex:1; min-width:0; color:rgba(255,255,255,.9); font-size:13px; letter-spacing:.4px; }
+.state { color:var(--cyan); font-size:10px; letter-spacing:2px; text-transform:uppercase; }
+.listening .state { color:#ff7777; }
+.thinking-state { color: var(--gold) !important; }
+
+.text-input-row {
+  position:absolute; left:50%; bottom:calc(3.2% + 74px); transform:translateX(-50%);
+  width:min(650px,78vw); z-index:12;
+  display:flex; gap:10px;
+}
+.text-input-row input {
+  flex:1; padding:10px 14px; border-radius:14px;
+  border:1px solid rgba(57,191,255,.35); background:rgba(2,8,15,.7);
+  color:#fff; font-size:13px; outline:none;
+}
+.text-input-row input::placeholder { color:rgba(255,255,255,.4); }
+.text-input-row button {
+  padding:10px 16px; border-radius:14px; border:1px solid rgba(57,191,255,.5);
+  background:rgba(57,191,255,.12); color:#dff7ff; font-size:12px; letter-spacing:1px;
+  cursor:pointer;
+}
+.text-input-row button:hover { background:rgba(57,191,255,.22); }
+
+@keyframes breathe { 50% { transform:scale(1.08); filter:brightness(1.18); } }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes pulse { 50% { transform:scale(1.08); } }
+@media(max-width:900px) {
+  .panel { width:180px; min-height:94px; padding:12px; }
+  .panel p { font-size:11px; }
+  .core { width:min(46vw,340px); }
+  .schedule,.mail,.smart { left:2%; }
+  .weather,.notes,.news { right:2%; }
+}
+@media(max-width:680px) {
+  .panel { display:none; }
+  .core { width:72vw; }
+  .topbar { inset:18px 18px auto; }
+}
+</style>
+</head>
+<body>
+<main class="home" id="home" aria-label="Nova home interface">
+  <div class="topbar">
+    <div class="brand">
+      <div class="name">NOVA</div>
+      <div class="sub">YOUR AI ASSISTANT</div>
+    </div>
+    <div class="clock">
+      <div class="time" id="time">13:13</div>
+      <div class="date" id="date">WED 07 OCT 2026</div>
+    </div>
+  </div>
+
+  <section class="panel schedule">
+    <h3>SCHEDULE</h3><p>✓ Meeting with team</p><p>✓ Project deadline</p>
+  </section>
+  <section class="panel reminders">
+    <h3>REMINDERS</h3><p>◯ Buy groceries</p><p>◯ Call mom</p>
+  </section>
+  <section class="panel weather">
+    <h3>WEATHER</h3><p class="gold">24°C</p><p>Partly cloudy</p>
+  </section>
+  <section class="panel mail">
+    <h3>MAIL</h3><p class="accent">Inbox (12)</p><p>New message</p>
+  </section>
+  <section class="panel notes">
+    <h3>NOTES</h3><p>Ideas for marketing campaign</p>
+  </section>
+  <section class="panel smart">
+    <h3>SMART HOME</h3><p class="accent">Living room lights — On</p><p>Thermostat — 22°C</p>
+  </section>
+  <section class="panel news">
+    <h3>NEWS</h3><p class="accent">Latest headlines</p><p>Tap or ask Nova to read them.</p>
+  </section>
+
+  <div class="connector conn-left"></div>
+  <div class="connector conn-right"></div>
+
+  <section class="core" aria-label="Nova AI core">
+    <div class="orbit"></div>
+    <div class="core-ring"></div>
+    <div class="core-ring gold"></div>
+    <div class="core-glow" id="coreGlow"></div>
+    <div class="core-label"><strong>NOVA</strong><span id="coreStatus">READY • LIVE • HANDS FREE</span></div>
+  </section>
+
+  <div class="text-input-row">
+    <input type="text" id="textInput" placeholder="Or type to Nova and press Enter…" autocomplete="off">
+    <button id="textSend">SEND</button>
+  </div>
+
+  <div class="voicebar">
+    <button class="mic-hotspot" id="mic" aria-label="Start Nova microphone"></button>
+    <div class="command" id="command">Say "Hey Nova" or press the microphone.</div>
+    <div class="state" id="state">System online</div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const home = document.getElementById('home');
+  const timeEl = document.getElementById('time');
+  const dateEl = document.getElementById('date');
+
+  function updateClock() {
+    const now = new Date();
+    timeEl.textContent = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'});
+    dateEl.textContent = now.toLocaleDateString('en-GB', {
+      weekday:'short', day:'2-digit', month:'short', year:'numeric'
+    }).toUpperCase();
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  (() => {
+  const home = document.getElementById('home');
+  const mic = document.getElementById('mic');
+  const command = document.getElementById('command');
+  const state = document.getElementById('state');
+  const coreGlow = document.getElementById('coreGlow');
+  const coreStatus = document.getElementById('coreStatus');
+  const textInput = document.getElementById('textInput');
+  const textSend = document.getElementById('textSend');
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  // A per-tab id so the server can keep separate short conversation
+  // histories if you ever open Nova in more than one tab/device.
+  const sessionId = (() => {
+    let id = sessionStorage.getItem('nova-session-id');
+    if (!id) {
+      id = 'nova-' + Math.random().toString(36).slice(2) + Date.now();
+      sessionStorage.setItem('nova-session-id', id);
+    }
+    return id;
+  })();
+
+  let recognition = null;
+  let listening = false;
+  let shouldListen = true;
+  let permissionRequested = false;
+  let wakeArmed = false;
+  let restartTimer = null;
+  let thinking = false;
+
+  function setState(on) {
+    listening = on;
+    mic.classList.toggle('listening', on);
+    home.classList.toggle('listening', on);
+    if (!thinking) state.textContent = on ? 'Listening' : 'System online';
+  }
+
+  function setThinking(on) {
+    thinking = on;
+    mic.classList.toggle('thinking', on);
+    coreGlow.classList.toggle('thinking', on);
+    if (on) {
+      state.textContent = 'Thinking…';
+      state.classList.add('thinking-state');
+      coreStatus.textContent = 'ASKING CLAUDE…';
+    } else {
+      state.classList.remove('thinking-state');
+      state.textContent = listening ? 'Listening' : 'System online';
+      coreStatus.textContent = 'READY • LIVE • HANDS FREE';
+    }
+  }
+
+  function speak(text) {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = .95;
+    u.pitch = 1;
+    window.speechSynthesis.speak(u);
+  }
+
+  const speechSupported = !!Recognition;
+  if (!speechSupported) {
+    command.textContent =
+      'Speech recognition isn’t available in this browser — you can still type to Nova below.';
+    mic.disabled = true;
+  } else {
+    recognition = new Recognition();
+    recognition.lang = 'en-GB';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+  }
+
+  function startListening() {
+    if (!speechSupported || !shouldListen || listening) return;
+    try {
+      recognition.start();
+      permissionRequested = true;
+    } catch (e) {
+      if (e && e.name !== 'InvalidStateError') {
+        setTimeout(startListening, 700);
+      }
+    }
+  }
+
+  function restartListening() {
+    if (!speechSupported || !shouldListen || restartTimer) return;
+    restartTimer = setTimeout(() => {
+      restartTimer = null;
+      startListening();
+    }, 350);
+  }
+
+  if (speechSupported) {
+    recognition.onstart = () => {
+      setState(true);
+      if (!thinking) command.textContent = 'Listening for "Hey Nova"…';
+    };
+
+    recognition.onend = () => {
+      setState(false);
+      if (shouldListen) restartListening();
+    };
+
+    recognition.onerror = (e) => {
+      setState(false);
+
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        shouldListen = false;
+        command.textContent =
+          'Microphone access is blocked. Allow microphone access for this site, then reload Nova.';
+        return;
+      }
+
+      if (e.error !== 'aborted' && !thinking) {
+        command.textContent = 'Listening for "Hey Nova"…';
+      }
+
+      if (shouldListen) restartListening();
+    };
+
+    recognition.onresult = (e) => {
+      let finalText = '';
+      let interim = '';
+
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const text = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += text;
+        else interim += text;
+      }
+
+      const heard = (finalText || interim).trim();
+      if (!heard) return;
+
+      const lower = heard.toLowerCase();
+      const wakeMatch = lower.match(/\b(?:hey|okay|ok|wake(?:\s+up)?)\s+nova\b/);
+
+      if (!wakeArmed && wakeMatch) {
+        const afterWake = heard.slice(wakeMatch.index + wakeMatch[0].length).trim();
+
+        if (afterWake) {
+          wakeArmed = true;
+          command.textContent = afterWake;
+          if (finalText) {
+            handleCommand(afterWake);
+            wakeArmed = false;
+          }
+        } else {
+          wakeArmed = true;
+          command.textContent = 'Yes? I’m listening…';
+          if (finalText) speak('Yes?');
+        }
+        return;
+      }
+
+      if (wakeArmed) {
+        if (interim) command.textContent = heard;
+        if (finalText) {
+          handleCommand(finalText);
+          wakeArmed = false;
+        }
+      }
+    };
+  }
+
+  // ---------- Command handling ----------
+  const WORDS = {zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,
+    eleven:11,twelve:12,fifteen:15,twenty:20,thirty:30,forty:40,fifty:50,sixty:60,ninety:90};
+  const num = s => { s = String(s).trim(); return /^\d+(\.\d+)?$/.test(s) ? parseFloat(s) : WORDS[s]; };
+  const SITES = {google:'https://www.google.com', youtube:'https://www.youtube.com',
+    maps:'https://maps.google.com', gmail:'https://mail.google.com', wikipedia:'https://www.wikipedia.org',
+    news:'https://news.google.com', calendar:'https://calendar.google.com', spotify:'https://open.spotify.com'};
+  const JOKES = [
+    'Why did the computer get cold? It left its Windows open.',
+    'I told my computer I needed a break. Now it won’t stop sending me Kit Kat ads.',
+    'Why do programmers prefer dark mode? Because light attracts bugs.'];
+  let timers = [];
+
+  function reply(text, say = true) {
+    command.textContent = text;
+    if (say) speak(text);
+  }
+
+  function openUrl(url, label) {
+    const w = window.open(url, '_blank', 'noopener');
+    if (w) reply('Opening ' + label + '.');
+    else {
+      command.innerHTML = '';
+      const a = document.createElement('a');
+      a.href = url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = 'Tap to open ' + label;
+      a.style.color = '#39bfff';
+      command.appendChild(a);
+      speak('Your browser blocked the pop-up. Tap the link to open ' + label + '.');
+    }
+  }
+
+  function calc(expr) {
+    expr = expr.replace(/\bplus\b/g,'+').replace(/\bminus\b/g,'-')
+      .replace(/\b(times|multiplied by|x)\b/g,'*').replace(/\b(divided by|over)\b/g,'/')
+      .replace(/\bto the power of\b/g,'**');
+    expr = expr.replace(/\b[a-z]+\b/g, w => (WORDS[w] !== undefined ? WORDS[w] : w));
+    if (!/^[\d\s+\-*/().**]+$/.test(expr)) return null;
+    try { const v = Function('"use strict";return (' + expr + ')')();
+      return Number.isFinite(v) ? Math.round(v * 1e6) / 1e6 : null; } catch (e) { return null; }
+  }
+
+  // Anything that doesn't match a quick local command gets sent to Claude,
+  // via our own backend (server.js), which keeps the API key off the browser.
+  async function askClaude(text) {
+    setThinking(true);
+    command.textContent = text;
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, sessionId }),
+      });
+      const data = await res.json();
+      setThinking(false);
+      if (!res.ok) {
+        reply(data.error || 'Nova ran into a problem reaching Claude.');
+        return;
+      }
+      reply(data.reply || '…');
+    } catch (err) {
+      setThinking(false);
+      reply('I couldn’t reach the Nova server. Is it still running?');
+    }
+  }
+
+  function handleCommand(raw) {
+    const t = raw.toLowerCase().replace(/[.,!?]/g, '').replace(/^(hey|ok|okay) nova\s*/, '').trim();
+    const woke = /\b(hey|wake) nova\b/.test(raw.toLowerCase());
+    let m;
+
+    if (!t) { if (woke) reply('Hello. I’m Nova. I’m listening.'); return; }
+
+    if (/^(stop|cancel|be quiet|quiet|shut up|never mind)$/.test(t)) {
+      window.speechSynthesis && window.speechSynthesis.cancel();
+      command.textContent = 'Stopped.'; return;
+    }
+    if (/\bwhat can you do\b|^help$|\bcommands\b/.test(t))
+      return reply('I handle time, dates, timers, maths, and opening sites instantly offline, ' +
+        'and I pass anything else — questions, conversation, advice — to Claude. Just ask.');
+    if (/\b(what('s| is) the )?time\b/.test(t) && !/timer/.test(t))
+      return reply('It’s ' + new Date().toLocaleTimeString('en-GB', {hour:'numeric', minute:'2-digit'}) + '.');
+    if (/\b(date|day is it|today)\b/.test(t))
+      return reply('Today is ' + new Date().toLocaleDateString('en-GB',
+        {weekday:'long', day:'numeric', month:'long', year:'numeric'}) + '.');
+    if ((m = t.match(/(?:set a )?timer for (\w+) (second|minute|hour)s?/))) {
+      const n = num(m[1]);
+      if (!n) return reply('Sorry, I didn’t catch the length of the timer.');
+      const ms = n * {second:1e3, minute:6e4, hour:36e5}[m[2]];
+      timers.push(setTimeout(() => reply('Your ' + n + ' ' + m[2] + (n === 1 ? '' : 's') + ' timer is done.'), ms));
+      return reply('Timer set for ' + n + ' ' + m[2] + (n === 1 ? '' : 's') + '.');
+    }
+    if (/cancel (all )?timers?/.test(t)) {
+      timers.forEach(clearTimeout); timers = []; return reply('Timers cancelled.');
+    }
+    if ((m = t.match(/^(?:search(?: for)?|google|look up) (.+)$/)))
+      return openUrl('https://www.google.com/search?q=' + encodeURIComponent(m[1]), 'search results for ' + m[1]);
+    if ((m = t.match(/^(?:open|go to|launch) (.+)$/))) {
+      const key = Object.keys(SITES).find(k => m[1].includes(k));
+      if (key) return openUrl(SITES[key], key);
+      return openUrl('https://www.google.com/search?q=' + encodeURIComponent(m[1]), m[1]);
+    }
+    if ((m = t.match(/^(?:calculate|work out) (.+)$/)) ||
+        (/^\s*[\d.]/.test(t) && /\d|plus|minus|times|divided/.test(t))) {
+      const r = calc(m ? m[1] : t);
+      if (r !== null) return reply((m ? m[1] : t) + ' equals ' + r + '.');
+    }
+    if (/\bjoke\b/.test(t)) return reply(JOKES[Math.floor(Math.random() * JOKES.length)]);
+
+    // Everything else — real conversation — goes to Claude.
+    askClaude(t);
+  }
+
+  mic.addEventListener('click', () => {
+    // The microphone is hands-free. The button restarts/re-requests
+    // permission, but Nova automatically keeps listening.
+    shouldListen = true;
+    if (!listening) startListening();
+  });
+
+  textSend.addEventListener('click', () => {
+    const v = textInput.value.trim();
+    if (!v) return;
+    textInput.value = '';
+    handleCommand(v);
+  });
+  textInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') textSend.click();
+  });
+
+  // Start hands-free listening after the page has loaded.
+  // The browser will ask for microphone permission the first time; after
+  // permission is granted, Nova automatically keeps the recogniser alive.
+  window.addEventListener('load', () => {
+    setTimeout(startListening, 500);
+  });
+})();
+})();
+</script>
+</body>
+</html>
